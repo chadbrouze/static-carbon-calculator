@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<title>Carbon FoodPrint Calculator</title>
+<style>
+ body{font-family:sans-serif;max-width:720px;margin:2rem auto}
+ input{width:100%;padding:.5rem;font-size:1rem}
+ button{margin-top:1rem;padding:.5rem 1rem;font-size:1rem}
+ table{margin-top:1.5rem;width:100%;border-collapse:collapse}
+ th,td{padding:.5rem;border-bottom:1px solid #ddd;text-align:left}
+ .total{font-weight:bold}
+ .tip{background:#f5f5f5;padding:1rem;margin-top:1rem;border-left:4px solid #4caf50}
+ .unknown{color:#d33}
+</style>
+
+<h1>Carbon FoodPrint Calculator</h1>
+<label>Enter foods (e.g. <code>250g beef, 1 egg, 150g peas</code>):</label>
+<input id="inp" placeholder="250g beef, 1 egg">
+<button onclick="calc()">Calculate</button>
+
+<div id="out"></div>
+
+<script>
+const KG_CO2 = {
+  beef:60, lamb:24, cheese:21, pork:12,
+  chicken:9, eggs:4.5, egg:4.5, milk:3.2,
+  tofu:3, peas:0.6, beans:0.8
+};
+
+function parse(item){
+  const m=item.trim().match(/(\\d+(?:\\.\\d+)?)(g|kg)?\\s+(.+)/i);
+  if(!m) return null;
+  let [_,qty,unit,food]=m;
+  qty=parseFloat(qty);
+  if((unit||'').toLowerCase()==='g') qty/=1000;
+  food=food.toLowerCase().trim();
+  return {qty,food};
+}
+
+function calc(){
+  const out=document.getElementById('out');
+  const txt=document.getElementById('inp').value;
+  if(!txt){out.innerHTML='';return;}
+  const parts=txt.split(/[,;\\n]/);
+  let rows='',total=0,unknown=[];
+  parts.forEach(p=>{
+    if(!p.trim()) return;
+    const r=parse(p);
+    if(!r){unknown.push(p.trim());return;}
+    const base=KG_CO2[r.food.replace(/s$/,'')] ?? null;
+    if(base===null){unknown.push(r.food);return;}
+    const impact=base*r.qty;
+    total+=impact;
+    rows+=`<tr><td>${p.trim()}</td><td>${impact.toFixed(2)}</td></tr>`;
+  });
+  out.innerHTML=`
+    <table><tr><th>Item</th><th>kg CO₂‑eq</th></tr>${rows}
+    <tr class=total><td>Total</td><td>${total.toFixed(2)}</td></tr></table>
+    ${unknown.length?`<p class=unknown>No data for: ${unknown.join(', ')}</p>`:''}
+    ${total>5?'<div class=tip>Tip: swapping beef/lamb for tofu, beans, or peas can cut meal emissions by 80–90 %.</div>':''}
+    <p style="font-size:.8rem;margin-top:2rem">Emission factors: Poore &amp; Nemecek 2018 (Our World in Data).</p>`;
+}
+</script>
+</html>
