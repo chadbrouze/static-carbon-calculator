@@ -28,7 +28,8 @@ const KG_CO2 = {
 };
 
 function parse(item){
-  const m=item.trim().match(/(\\d+(?:\\.\\d+)?)(g|kg)?\\s+(.+)/i);
+    const m = item.trim()
+    .match(/(\\d+(?:\\.\\d+)?)(?:\\s*)(g|kg)?\\s+(.+)/i);
   if(!m) return null;
   let [_,qty,unit,food]=m;
   qty=parseFloat(qty);
